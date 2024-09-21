@@ -1,4 +1,5 @@
 from django.db import models
+from django.conf import settings
 from django.contrib.auth.models import User
 
 class Recipe(models.Model):
@@ -8,7 +9,7 @@ class Recipe(models.Model):
     cooking_time = models.IntegerField()  # In minutes
     category = models.CharField(max_length=100)
     tags = models.ManyToManyField('Tag', related_name='recipes')
-    created_by = models.ForeignKey(User, on_delete=models.CASCADE)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     
     def __str__(self):
@@ -16,7 +17,7 @@ class Recipe(models.Model):
 
 class Review(models.Model):
     recipe = models.ForeignKey(Recipe, related_name='reviews', on_delete=models.CASCADE)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     rating = models.IntegerField()  # 1 to 5 stars
     comment = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
