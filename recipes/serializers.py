@@ -12,11 +12,13 @@ class ReviewSerializer(serializers.ModelSerializer):
         fields = ['user', 'rating', 'comment', 'created_at']
 
 class RecipeSerializer(serializers.ModelSerializer):
-    created_by = serializers.ReadOnlyField(source='created_by.username')  # To show the creator's name
-
+    reviews = ReviewSerializer(many=True, read_only=True)
+    nutrition_info = NutritionInfoSerializer(read_only=True)
+    
     class Meta:
         model = Recipe
-        fields = ['id', 'title', 'description', 'created_by', 'tags']  # Include all fields you want
+        fields = ['id', 'title', 'ingredients', 'preparation_steps', 'cooking_time', 'category', 'tags', 'reviews', 'nutrition_info', 'created_by']
+
 class TagSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tag
