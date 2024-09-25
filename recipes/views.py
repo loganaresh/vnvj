@@ -1,4 +1,4 @@
-from rest_framework import viewsets, filters
+from rest_framework import viewsets, filters,generics, permissions
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from .models import Recipe, Review, Tag, NutritionInfo
 from .serializers import RecipeSerializer, ReviewSerializer, TagSerializer
@@ -21,7 +21,26 @@ class ReviewViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+class RecipeListView(generics.ListAPIView):
+    queryset = Recipe.objects.all()
+    serializer_class = RecipeSerializer
+    permission_classes = [permissions.IsAuthenticated]  # Anyone logged in can view all recipes
 
+# Create a new recipe (only for authenticated users)
+class RecipeCreateView(generics.CreateAPIView):
+    serializer_class = RecipeSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user)
+
+# Manage (Retrieve, Update, Delete) user-posted recipes
+class RecipeManageView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = RecipeSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Recipe.objects.filter(author=self.request.user)
 class TagViewSet(viewsets.ModelViewSet):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
@@ -34,7 +53,7 @@ def create_meal_plan(request):
         meal_plan = MealPlan.objects.create(user=request.user, date=date)
         meal_plan.recipes.set(recipes)
         meal_plan.save()
-        return redirect('meal_plan_detail', pk=meal_plan.pk)
+        return 
     recipes = Recipe.objects.all()
     return 
 
