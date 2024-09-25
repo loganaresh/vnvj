@@ -24,9 +24,8 @@ class ReviewViewSet(viewsets.ModelViewSet):
 class RecipeListView(generics.ListAPIView):
     queryset = Recipe.objects.all()
     serializer_class = RecipeSerializer
-    permission_classes = [permissions.IsAuthenticated]  # Anyone logged in can view all recipes
+    permission_classes = [permissions.IsAuthenticated]  
 
-# Create a new recipe (only for authenticated users)
 class RecipeCreateView(generics.CreateAPIView):
     serializer_class = RecipeSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -34,7 +33,6 @@ class RecipeCreateView(generics.CreateAPIView):
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
 
-# Manage (Retrieve, Update, Delete) user-posted recipes
 class RecipeManageView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = RecipeSerializer
     permission_classes = [permissions.IsAuthenticated]
