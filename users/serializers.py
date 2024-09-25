@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import UserProfile, Recipe
+from .models import UserProfile, FavoriteRecipe,Recipe
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserProfile
