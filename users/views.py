@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from django.db.models import Q, Count
 from rest_framework.decorators import api_view
 from rest_framework.permissions import IsAuthenticated
-from .models import UserProfile, Recipe, UserSearchHistory
+from .models import *
 from .serializers import *
 from recipes.models import *
 from recipes.serializers import *
