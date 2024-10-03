@@ -5,6 +5,8 @@ class ReviewSerializer(serializers.ModelSerializer):
     class Meta:
         model = Review
         fields = ['user', 'rating', 'comment', 'created_at']
+        
+        
 class NutritionInfoSerializer(serializers.ModelSerializer):
     class Meta:
         model = NutritionInfo

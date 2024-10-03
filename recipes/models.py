@@ -2,6 +2,7 @@ from django.db import models
 from django.conf import settings
 from django.contrib.auth.models import User
 
+
 class Recipe(models.Model):
     title = models.CharField(max_length=255)
     ingredients = models.TextField()
@@ -45,6 +46,7 @@ class Ingredient(models.Model):
 
     def __str__(self):
         return self.name
+
 
 class RecipeIngredient(models.Model):
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
