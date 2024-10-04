@@ -17,7 +17,6 @@ class UserProfileViewSet(viewsets.ModelViewSet):
 class FavoriteRecipeViewSet(viewsets.ModelViewSet):
     queryset = FavoriteRecipe.objects.all()
     serializer_class = FavoriteRecipeSerializer
-    permission_classes = [IsAuthenticated]
     def get_queryset(self):
         return self.queryset.filter(user=self.request.user)
     
