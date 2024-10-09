@@ -5,11 +5,11 @@ from django.utils import timezone
 class UserManager(BaseUserManager):
     def create_user(self, username, mobile_number, first_name, last_name, email, password=None):
         if not username:
-            raise ValueError("Users must have a username")
+            raise ValueError("The Username field is required")
         if not mobile_number:
-            raise ValueError("Users must have a mobile number")
+            raise ValueError("The Mobile number field is required")
         if not email:
-            raise ValueError("Users must have an email address")
+            raise ValueError("The Email field is required")
 
         email = self.normalize_email(email)
         user = self.model(
@@ -19,7 +19,12 @@ class UserManager(BaseUserManager):
             last_name=last_name,
             email=email
         )
-        user.set_password(password)
+        
+        if password:
+            user.set_password(password)
+        else:
+            raise ValueError("The Password field is required")
+
         user.save(using=self._db)
         return user
 
@@ -38,14 +43,14 @@ class UserManager(BaseUserManager):
         return user
 
 class User(AbstractBaseUser, PermissionsMixin):
-    username = models.CharField(max_length=30, unique=True)
-    first_name = models.CharField(max_length=50)
-    last_name = models.CharField(max_length=50)
-    email = models.EmailField(max_length=255, unique=True)
-    mobile_number = models.CharField(max_length=10, unique=True)
-    is_active = models.BooleanField(default=True)
-    is_staff = models.BooleanField(default=False)
-    date_joined = models.DateTimeField(default=timezone.now)
+    username = models.CharField(max_length=30, unique=True, verbose_name="Username")
+    first_name = models.CharField(max_length=50, verbose_name="First Name")
+    last_name = models.CharField(max_length=50, verbose_name="Last Name")
+    email = models.EmailField(max_length=255, unique=True, verbose_name="Email Address")
+    mobile_number = models.CharField(max_length=15, unique=True, verbose_name="Mobile Number")
+    is_active = models.BooleanField(default=True, verbose_name="Active")
+    is_staff = models.BooleanField(default=False, verbose_name="Staff Status")
+    date_joined = models.DateTimeField(default=timezone.now, verbose_name="Date Joined")
 
     objects = UserManager()
 

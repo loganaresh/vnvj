@@ -1,15 +1,39 @@
-from rest_framework import viewsets, filters,generics, permissions
+from rest_framework import viewsets, filters, status, generics
+from .models import Recipe, Category, Review, Ingredient, MealPlan, MealPlanRecipe, GroceryList
+from .serializers import RecipeSerializer, CategorySerializer, ReviewSerializer, RegisterSerializer, MealPlanSerializer, MealPlanRecipeSerializer, GroceryListSerializer
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
-from .models import Recipe, Review, Tag, NutritionInfo
-from .serializers import RecipeSerializer, ReviewSerializer, TagSerializer
-from django.shortcuts import render, get_object_or_404
-from .models import Recipe, MealPlan, GroceryList, Ingredient
-from django.contrib.auth.decorators import login_required
+from rest_framework.response import Response
+from django.contrib.auth.models import User
+from rest_framework.permissions import AllowAny, IsAuthenticated
+
+class MealPlanViewSet(viewsets.ModelViewSet):
+    queryset = MealPlan.objects.all()
+    serializer_class = MealPlanSerializer
+    permission_classes = [IsAuthenticated]
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+class MealPlanRecipeViewSet(viewsets.ModelViewSet):
+    queryset = MealPlanRecipe.objects.all()
+    serializer_class = MealPlanRecipeSerializer
+    permission_classes = [IsAuthenticated]
+
+class GroceryListViewSet(viewsets.ModelViewSet):
+    queryset = GroceryList.objects.all()
+    serializer_class = GroceryListSerializer
+    permission_classes = [IsAuthenticated]
+class RegisterView(generics.CreateAPIView):
+    queryset = User.objects.all()
+    permission_classes = (AllowAny,)
+    serializer_class = RegisterSerializer
+
 class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
     serializer_class = RecipeSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]
     filter_backends = [filters.SearchFilter]
-    search_fields = ['title', 'ingredients', 'category', 'tags__name'] 
+    search_fields = ['title', 'ingredients', 'tags']
 
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)
@@ -21,60 +45,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
-class RecipeListView(generics.ListAPIView):
-    queryset = Recipe.objects.all()
-    serializer_class = RecipeSerializer
-    permission_classes = [permissions.IsAuthenticated]  
 
-class RecipeCreateView(generics.CreateAPIView):
-    serializer_class = RecipeSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def perform_create(self, serializer):
-        serializer.save(author=self.request.user)
-
-class RecipeManageView(generics.RetrieveUpdateDestroyAPIView):
-    serializer_class = RecipeSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        return Recipe.objects.filter(author=self.request.user)
-class TagViewSet(viewsets.ModelViewSet):
-    queryset = Tag.objects.all()
-    serializer_class = TagSerializer
-@login_required
-def create_meal_plan(request):
-    if request.method == 'POST':
-        # Get the recipes selected by the user
-        recipes = request.POST.getlist('recipes')
-        date = request.POST['date']
-        meal_plan = MealPlan.objects.create(user=request.user, date=date)
-        meal_plan.recipes.set(recipes)
-        meal_plan.save()
-        return 
-    recipes = Recipe.objects.all()
-    return 
-
-@login_required
-def generate_grocery_list(request, meal_plan_id):
-    meal_plan = get_object_or_404(MealPlan, id=meal_plan_id)
-    grocery_list = GroceryList.objects.create(user=request.user)
-    
-    for recipe in meal_plan.recipes.all():
-        for ingredient in recipe.ingredients.all():
-            grocery_list.items.add(ingredient)
-
-    return 
-from .serializers import RecipeSerializer, MealPlanSerializer, GroceryListSerializer
-
-class RecipeViewSet(viewsets.ModelViewSet):
-    queryset = Recipe.objects.all()
-    serializer_class = RecipeSerializer
-
-class MealPlanViewSet(viewsets.ModelViewSet):
-    queryset = MealPlan.objects.all()
-    serializer_class = MealPlanSerializer
-
-class GroceryListViewSet(viewsets.ModelViewSet):
-    queryset = GroceryList.objects.all()
-    serializer_class = GroceryListSerializer
+class CategoryViewSet(viewsets.ModelViewSet):
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer

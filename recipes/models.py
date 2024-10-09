@@ -1,63 +1,85 @@
 from django.db import models
-from django.conf import settings
 from django.contrib.auth.models import User
 
+class Ingredient(models.Model):
+    name = models.CharField(max_length=255)
+    quantity = models.FloatField(help_text="Quantity required in the recipe")
+    unit = models.CharField(max_length=50, help_text="Unit of measure (e.g., grams, cups)")
+    calories = models.FloatField(help_text="Calories per unit", default=0)
+    protein = models.FloatField(help_text="Protein per unit in grams", default=0)
+    fat = models.FloatField(help_text="Fat per unit in grams", default=0)
+    carbs = models.FloatField(help_text="Carbohydrates per unit in grams", default=0)
+
+    def __str__(self):
+        return self.name
+class Category(models.Model):
+    name = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.name
 
 class Recipe(models.Model):
     title = models.CharField(max_length=255)
-    ingredients = models.TextField()
+    ingredients = models.ManyToManyField(Ingredient, through='RecipeIngredient')
     preparation_steps = models.TextField()
-    cooking_time = models.IntegerField()
-    category = models.CharField(max_length=100)
-    tags = models.ManyToManyField('Tag', related_name='recipes')
-    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    created_at = models.DateTimeField(auto_now_add=True)
+    cooking_time = models.IntegerField(help_text="Time in minutes")
+    categories = models.ManyToManyField(Category)
+    tags = models.CharField(max_length=255, blank=True)
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE)
+
     def __str__(self):
         return self.title
-
-class Review(models.Model):
-    recipe = models.ForeignKey(Recipe, related_name='reviews', on_delete=models.CASCADE)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    rating = models.IntegerField()  # 1 to 5 stars
-    comment = models.TextField(null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f'{self.recipe.title} - {self.user.username}'
-
-class Tag(models.Model):
-    name = models.CharField(max_length=50)
-
-    def __str__(self):
-        return self.name
-
-class NutritionInfo(models.Model):
-    recipe = models.OneToOneField(Recipe, on_delete=models.CASCADE)
-    calories = models.IntegerField()
-    protein = models.FloatField()
-    fat = models.FloatField()
-    carbohydrates = models.FloatField()
-
-    def __str__(self):
-        return f'Nutrition info for {self.recipe.title}'
-class Ingredient(models.Model):
-    name = models.CharField(max_length=255)
-    quantity = models.CharField(max_length=50)
-
-    def __str__(self):
-        return self.name
-
 
 class RecipeIngredient(models.Model):
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
     ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
-    quantity = models.CharField(max_length=50)
+    amount = models.FloatField(help_text="Amount used in the recipe")
+
+    def __str__(self):
+        return f"{self.amount} of {self.ingredient.name} in {self.recipe.title}"
+
+
+class Review(models.Model):
+    recipe = models.ForeignKey(Recipe, related_name='reviews', on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    rating = models.IntegerField(default=1)  # 1 to 5 scale
+    review_text = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Review by {self.user} for {self.recipe.title}"
 class MealPlan(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    date = models.DateField()
-    recipes = models.ManyToManyField(Recipe)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    title = models.CharField(max_length=255)
+    start_date = models.DateField()
+    end_date = models.DateField()
+
+    def __str__(self):
+        return f"Meal Plan: {self.title} for {self.user.username}"
+
+class MealPlanRecipe(models.Model):
+    meal_plan = models.ForeignKey(MealPlan, on_delete=models.CASCADE)
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
+    meal_date = models.DateField()
+
+    def __str__(self):
+        return f"{self.recipe.title} on {self.meal_date}"
 
 class GroceryList(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    items = models.ManyToManyField(Ingredient)
+    meal_plan = models.OneToOneField(MealPlan, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def get_grocery_items(self):
+        ingredients = {}
+        meal_plan_recipes = MealPlanRecipe.objects.filter(meal_plan=self.meal_plan)
+        for meal_plan_recipe in meal_plan_recipes:
+            for recipe_ingredient in RecipeIngredient.objects.filter(recipe=meal_plan_recipe.recipe):
+                ingredient = recipe_ingredient.ingredient
+                if ingredient.name not in ingredients:
+                    ingredients[ingredient.name] = recipe_ingredient.amount
+                else:
+                    ingredients[ingredient.name] += recipe_ingredient.amount
+        return ingredients
+
+    def __str__(self):
+        return f"Grocery list for {self.meal_plan.title}"
